@@ -137,6 +137,16 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Set ASGI application to map to application variable inside asgi.py module
 ASGI_APPLICATION = 'backend.asgi.application'
 
+# Set channel_layer to work with redis
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            'hosts': [(env('REDIS_HOST'), env.int('REDIS_PORT'))],
+        }
+    }
+}
+
 # DRF settings. Set up tuples of classes for authentications and permissions
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
