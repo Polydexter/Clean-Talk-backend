@@ -31,21 +31,20 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['localhost']
 
-
 # Application definition
 
 INSTALLED_APPS = [
+    'channels',
+    'rest_framework',
+    'corsheaders',
+    'conversations',
+    'users',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'conversations',
-    'corsheaders',
-    'rest_framework',
-    'channels',
-    'users',
 ]
 
 MIDDLEWARE = [
@@ -136,6 +135,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Set ASGI application to map to application variable inside asgi.py module
 ASGI_APPLICATION = 'backend.asgi.application'
+
+AUTH_USER_MODEL = 'users.UserProfile'
 
 # Set channel_layer to work with redis
 CHANNEL_LAYERS = {

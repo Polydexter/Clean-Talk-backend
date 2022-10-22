@@ -1,10 +1,10 @@
 from rest_framework import serializers
-from rest_framework.permissions import IsAuthenticated
-from django.contrib.auth.models import User
-from django.contrib.auth import authenticate
-from django.contrib.auth.hashers import make_password
+from django.contrib.auth import get_user_model
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 # Serializer to register a user
+User = get_user_model()
+
 class RegisterSerializer(serializers.ModelSerializer):
     
     class Meta:
@@ -23,12 +23,25 @@ class RegisterSerializer(serializers.ModelSerializer):
         )
         return user
 
-# User serializer
-class UserSerializer(serializers.ModelSerializer):
 
+class UserSerializer(serializers.ModelSerializer):
+    """
+    Serializer for users profiles
+    """
     class Meta:
         model = User
         fields = '__all__'
         extra_kwargs = {
             'password': { 'write_only': True}
         }
+
+
+class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+
+        # Custom claim with username
+        token['username'] = user.username
+
+        return  token
