@@ -1,9 +1,12 @@
 from rest_framework import generics, permissions, mixins
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import AccessToken
-from .serializers import RegisterSerializer, UserSerializer
-from django.contrib.auth.models import User
+from .serializers import MyTokenObtainPairSerializer, RegisterSerializer, UserSerializer
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 # Register API view
 class RegisterAPI(generics.GenericAPIView):
@@ -30,3 +33,6 @@ class UserDetails(generics.GenericAPIView):
             'user': UserSerializer(user,
             context=self.get_serializer_context()).data,
         })
+
+class MyTokenObtainPairView(TokenObtainPairView):
+    serializer_class = MyTokenObtainPairSerializer
