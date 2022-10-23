@@ -13,7 +13,11 @@ class ChatConsumer(JsonWebsocketConsumer):
         self.room_name = None
 
     def connect(self):
-        print("Hello, client!")
+        self.user = self.scope['user']
+        if not self.user.is_authenticated:
+            return
+        else:
+            print(f"Hello, {self.user.username}!")
         self.room_name = "home"
         self.accept()
         async_to_sync(self.channel_layer.group_add)(
