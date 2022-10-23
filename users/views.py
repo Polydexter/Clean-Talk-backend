@@ -1,10 +1,15 @@
-from rest_framework import generics, permissions, mixins
+from cgitb import lookup
+from django.contrib.auth import get_user_model
+from rest_framework import generics, status
+# from rest_framework.viewsets import GenericViewSet
+# from rest_framework.mixins import ListModelMixin, RetrieveModelMixin, UpdateModelMixin
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import AccessToken
 from .serializers import MyTokenObtainPairSerializer, RegisterSerializer, UserSerializer
-from django.contrib.auth import get_user_model
+
 
 User = get_user_model()
 
@@ -20,19 +25,20 @@ class RegisterAPI(generics.GenericAPIView):
             "user": UserSerializer(user,
             context=self.get_serializer_context()).data,
             "message": "User created successfully. Now log in to get token",
-        }, status=201)
+        }, status=status.HTTP_201_CREATED)
 
-class UserDetails(generics.GenericAPIView):
+class Userlist(generics.GenericAPIView):
     permission_classes = (IsAuthenticated,)
+    serializer_class = UserSerializer
+    queryset = User.objects.all()
+
     def get(self, request):
-        token = request.headers['Authorization'].split(' ')[1]
-        access_token = AccessToken(token)
-        user = User.objects.get(pk=access_token['user_id'])
-        message = "Hello, authenticated user!"
-        return Response({
-            'user': UserSerializer(user,
-            context=self.get_serializer_context()).data,
-        })
+        serializer = UserSerializer(
+            User.objects.all(), many=True, context={'request': request}
+        )
+        return Response(status=status.HTTP_200_OK, data=serializer.data)
+
+
 
 class MyTokenObtainPairView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer

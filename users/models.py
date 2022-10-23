@@ -1,4 +1,5 @@
 from email.policy import default
+from enum import unique
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
 
@@ -37,7 +38,7 @@ class UserProfile(AbstractBaseUser, PermissionsMixin):
     Customized user model
     """
     email = models.EmailField(max_length=255, unique=True)
-    username = models.CharField(max_length=255)
+    username = models.CharField(max_length=255, unique=True)
     is_superuser = models.BooleanField(default=False)
     is_staff = models.BooleanField(default=False)
 
