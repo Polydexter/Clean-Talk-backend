@@ -23,8 +23,9 @@ def get_user(token):
         user = get_user_model().objects.get(id=decoded_data['user_id'])
     except (InvalidToken, TokenError) as error:
         print(error)
+        return AnonymousUser
     
-    return user or AnonymousUser
+    return user
 
 
 class TokenAuthMiddleware:

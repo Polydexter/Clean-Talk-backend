@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 
+from datetime import timedelta
 from pathlib import Path
 import environ
 
@@ -39,6 +40,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'conversations',
     'users',
+    'rest_framework_simplejwt.token_blacklist',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -157,6 +159,13 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
         'rest_framework.permissions.AllowAny',
     ),
+}
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
 }
 
 # Prevent CORS issues by mentioning the fronend domain
