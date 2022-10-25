@@ -3,6 +3,7 @@ from uuid import UUID
 from asgiref.sync import async_to_sync
 from django.db.models import Q
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import AnonymousUser
 from channels.generic.websocket import JsonWebsocketConsumer
 from conversations.models import Conversation, Message
 from conversations.api.serializers import MessageSerializer
@@ -29,20 +30,18 @@ class ChatConsumer(JsonWebsocketConsumer):
 
     def connect(self):
         self.user = self.scope['user']
-        if not self.user.is_authenticated:
+        # Refuse connection if user is not authenticated
+        if self.user is AnonymousUser:
+            print("I don't know this user")
             return
-        else:
-            print(f"Hello, {self.user.username}!")
         self.accept()
         self.conversation_name = f"{self.scope['url_route']['kwargs']['conversation_name']}"
-        users = self.get_users()
         self.conversation, created = Conversation.objects.get_or_create(name=self.conversation_name)
         async_to_sync(self.channel_layer.group_add)(
             self.conversation_name,
             self.channel_name,
         )
-        messages = Message.objects.filter(Q(from_user=users[0], to_user=users[1]) | Q(from_user=users[1], to_user=users[0])).order_by("timestamp"[0:20])
-        print(messages)
+        messages = self.get_messages()
         self.send_json({
             'type': 'last_20_messages',
             "messages": MessageSerializer(messages, many=True).data,
@@ -83,13 +82,16 @@ class ChatConsumer(JsonWebsocketConsumer):
         receiver = [username for username in usernames if username != self.user.username][0]
         return User.objects.get(username=receiver)
 
-    def get_users(self):
+    def get_messages(self):
         usernames = self.conversation_name.split('__')
         id_list = []
         for username in usernames:
             id_list += [User.objects.get(username=username)]
-        return id_list
-    
+        messages = Message.objects.filter(
+                Q(from_user=id_list[0], to_user=id_list[1]) | Q(from_user=id_list[1], to_user=id_list[0])
+            ).order_by("timestamp"[0:20])
+        return messages
+
 
     @classmethod
     def encode_json(cls, content):
