@@ -1,8 +1,6 @@
 from cgitb import lookup
 from django.contrib.auth import get_user_model
 from rest_framework import generics, status
-# from rest_framework.viewsets import GenericViewSet
-# from rest_framework.mixins import ListModelMixin, RetrieveModelMixin, UpdateModelMixin
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -27,6 +25,7 @@ class RegisterAPI(generics.GenericAPIView):
             "message": "User created successfully. Now log in to get token",
         }, status=status.HTTP_201_CREATED)
 
+# List all the users
 class Userlist(generics.GenericAPIView):
     permission_classes = (IsAuthenticated,)
     serializer_class = UserSerializer
@@ -39,6 +38,6 @@ class Userlist(generics.GenericAPIView):
         return Response(status=status.HTTP_200_OK, data=serializer.data)
 
 
-
+# Custom ObtainPair view for JWT
 class MyTokenObtainPairView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer

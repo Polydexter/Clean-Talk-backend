@@ -15,12 +15,12 @@ class UUIDEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, UUID):
             return obj.hex
-        return json.json.JSONEncoder.default(self, obj)
+        return json.JSONEncoder.default(self, obj)
 
 
 class ChatConsumer(JsonWebsocketConsumer):
     """
-    TODO: description
+    Consumer for a single conversation
     """
     def __init__(self, *args, **kwargs):
         super().__init__(args, kwargs)
@@ -32,15 +32,16 @@ class ChatConsumer(JsonWebsocketConsumer):
         self.user = self.scope['user']
         # Refuse connection if user is not authenticated
         if self.user is AnonymousUser:
-            print("I don't know this user")
             return
         self.accept()
+        # Get or create a conversation
         self.conversation_name = f"{self.scope['url_route']['kwargs']['conversation_name']}"
         self.conversation, created = Conversation.objects.get_or_create(name=self.conversation_name)
         async_to_sync(self.channel_layer.group_add)(
             self.conversation_name,
             self.channel_name,
         )
+        # Send last 20 messages of the conversation
         messages = self.get_messages()
         self.send_json({
             'type': 'last_20_messages',
@@ -48,7 +49,6 @@ class ChatConsumer(JsonWebsocketConsumer):
         })
     
     def disconnect(self, close_code):
-        print('Bye, client!')
         return super().disconnect(close_code)
         
     # Receive message from websocket
@@ -62,7 +62,7 @@ class ChatConsumer(JsonWebsocketConsumer):
                 content=content['message'],
                 conversation=self.conversation
             )
-            # Send every chat message to all the members of the group
+            # Send chat message to all the members of the group
             async_to_sync(self.channel_layer.group_send)(
                 self.conversation_name,
                 {
@@ -91,7 +91,6 @@ class ChatConsumer(JsonWebsocketConsumer):
                 Q(from_user=id_list[0], to_user=id_list[1]) | Q(from_user=id_list[1], to_user=id_list[0])
             ).order_by("timestamp"[0:20])
         return messages
-
 
     @classmethod
     def encode_json(cls, content):
