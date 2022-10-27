@@ -45,8 +45,6 @@ class TokenAuthMiddleware:
         # Get the token
         token = parse_qs(scope["query_string"].decode('utf8'))['token'][0]
 
-        # Try to authenticate
-
         # Get user id
         user = await get_user(token)
         scope['token'] = token
