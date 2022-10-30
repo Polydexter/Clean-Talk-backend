@@ -41,11 +41,15 @@ class ChatConsumer(JsonWebsocketConsumer):
             self.conversation_name,
             self.channel_name,
         )
-        # Send last 20 messages of the conversation
-        messages = self.get_messages()
+        # Send last 10 messages of the conversation
+        all_messages = self.get_messages()
+        message_count = len(all_messages)
+        messages = all_messages[0:20]
         self.send_json({
             'type': 'last_20_messages',
             "messages": MessageSerializer(messages, many=True).data,
+            'total_count': message_count,
+            'has_more': message_count > 20,
         })
     
     def disconnect(self, close_code):
@@ -89,7 +93,7 @@ class ChatConsumer(JsonWebsocketConsumer):
             id_list += [User.objects.get(username=username)]
         messages = Message.objects.filter(
                 Q(from_user=id_list[0], to_user=id_list[1]) | Q(from_user=id_list[1], to_user=id_list[0])
-            ).order_by("timestamp"[0:20])
+            ).order_by("-timestamp")
         return messages
 
     @classmethod

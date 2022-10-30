@@ -22,7 +22,7 @@ class RegisterAPI(generics.GenericAPIView):
         return Response({
             "user": UserSerializer(user,
             context=self.get_serializer_context()).data,
-            "message": "User created successfully. Now log in to get token",
+            "message": "User created successfully",
         }, status=status.HTTP_201_CREATED)
 
 # List all the users
