@@ -37,11 +37,27 @@ class ChatConsumer(JsonWebsocketConsumer):
         # Get or create a conversation
         self.conversation_name = f"{self.scope['url_route']['kwargs']['conversation_name']}"
         self.conversation, created = Conversation.objects.get_or_create(name=self.conversation_name)
+        # Send a list of online users to the group
         async_to_sync(self.channel_layer.group_add)(
             self.conversation_name,
             self.channel_name,
         )
-        # Send last 10 messages of the conversation
+        self.send_json(
+            {
+                'type': 'online_user_list',
+                'users': [user.username for user in self.conversation.online.all()],
+            }
+        )
+        # Notify the group when a user has joined the conversation
+        async_to_sync(self.channel_layer.group_send)(
+            self.conversation_name,
+            {
+                'type': 'user_join',
+                'user': self.user.username,
+            }
+        )
+        self.conversation.online.add(self.user)
+        # Send last 20 messages of the conversation
         all_messages = self.get_messages()
         message_count = len(all_messages)
         messages = all_messages[0:20]
@@ -53,6 +69,15 @@ class ChatConsumer(JsonWebsocketConsumer):
         })
     
     def disconnect(self, close_code):
+        if self.user.is_authenticated:
+            async_to_sync(self.channel_layer.group_send)(
+                self.conversation_name,
+                {
+                    'type': 'user_leave',
+                    'user': self.user.username,
+                }
+            )
+            self.conversation.online.remove(self.user)
         return super().disconnect(close_code)
         
     # Receive message from websocket
@@ -77,10 +102,18 @@ class ChatConsumer(JsonWebsocketConsumer):
             )
         return super().receive_json(content, **kwargs)
 
-    # Custom method for echo feature
+    # Custom methods for each message type
     def chat_message_echo(self, event):
         self.send_json(event)
 
+    def user_join(self, event):
+        self.send_json(event)
+
+    def user_leave(self, event):
+
+        self.send_json(event)
+
+    # Auxliary methods for consumer-level methods
     def get_receiver(self):
         usernames = self.conversation.name.split('__')
         receiver = [username for username in usernames if username != self.user.username][0]
