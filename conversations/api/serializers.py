@@ -43,10 +43,11 @@ class ConversationSerializer(serializers.ModelSerializer):
     """
     other_user = serializers.SerializerMethodField()
     last_message = serializers.SerializerMethodField()
+    unread_count = serializers.SerializerMethodField()
 
     class Meta:
         model = Conversation
-        fields = ('id', 'name', 'other_user', 'last_message')
+        fields = ('id', 'name', 'other_user', 'last_message', 'unread_count')
 
     def get_last_message(self, obj):
         messages = obj.messages.all().order_by('-timestamp')
@@ -62,4 +63,8 @@ class ConversationSerializer(serializers.ModelSerializer):
             if username != self.context['user'].username:
                 other_user = User.objects.get(username=username)
                 return UserSerializer(other_user, context=context).data
+
+    def get_unread_count(self, obj):
+        unread_count = obj.messages.filter(to_user=self.context['user'], read=False).count()
+        return unread_count
 
